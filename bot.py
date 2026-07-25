@@ -3,7 +3,7 @@ from telebot import types
 from tinydb import TinyDB, Query
 import time
 from datetime import datetime
-from config import TOKEN, CHANNEL_ID, CHANNEL_LINK, ADMIN_CHANNEL_ID
+from config import TOKEN, CHANNEL_ID, CHANNEL_LINK, ADMIN_CHANNEL_ID, ADMIN_ID
 import sys
 import traceback
 
@@ -200,7 +200,7 @@ def create_bot():
                 amount = int(message.text)
                 user_data = db.get(User.user_id == user_id)
                 if amount <= 0:
-                    bot.send_message(message.chat.id, "<b>Сумма звёзд должна быть больше нуля</b>")
+                    bot.send_message(message.chat.id, "<b>Сумма звёзд должна быть больше нуля</b>", parse_mode='HTML')
                     return
                 if amount > user_data['balance']:
                     bot.send_message(message.chat.id, "Недостаточно звёзд на балансе!")
@@ -355,59 +355,68 @@ def create_bot():
                 print(f"Ошибка в profile_handler: {e}")
                 bot.send_message(message.chat.id, "Ошибка при загрузке профиля")
 
+        # ========== НОВАЯ ФУНКЦИЯ: РУЧНОЕ ПОПОЛНЕНИЕ ==========
         @bot.message_handler(func=lambda message: message.text == "💰 Пополнить звёзды")
         def add_stars_handler(message):
+            """Кнопка пополнения - отправляет инструкцию для ручного пополнения"""
             try:
-                bot.send_message(message.chat.id,
-                               "<b>Введите сколько хотите звезд пополнить на баланс</b>",
-                               parse_mode='HTML')
-                bot.register_next_step_handler(message, process_payment_amount)
+                markup = types.InlineKeyboardMarkup()
+                # Замените на свой юзернейм
+                btn_admin = types.InlineKeyboardButton("👤 Связаться с админом", url="https://t.me/Wromly")
+                markup.add(btn_admin)
+                
+                bot.send_message(
+                    message.chat.id,
+                    "⭐ <b>Пополнение баланса</b>\n\n"
+                    "Для пополнения баланса:\n\n"
+                    "1️⃣ Напишите администратору\n"
+                    "2️⃣ Укажите сумму пополнения\n"
+                    "3️⃣ После оплаты вам зачислят звёзды\n\n"
+                    "💳 Минимальная сумма: 50 звёзд",
+                    parse_mode='HTML',
+                    reply_markup=markup
+                )
             except Exception as e:
                 print(f"Ошибка в add_stars_handler: {e}")
 
-        def process_payment_amount(message):
+        # ========== КОМАНДЫ ДЛЯ АДМИНИСТРАТОРА ==========
+        
+        @bot.message_handler(commands=['addstars'])
+        def add_stars_admin(message):
+            """Только для админа - добавляет звёзды пользователю"""
+            if message.from_user.id != ADMIN_ID:
+                bot.send_message(message.chat.id, "⛔ У вас нет прав!")
+                return
+            
             try:
-                user_id = message.from_user.id
-                amount = int(message.text)
-                if amount <= 0:
-                    bot.send_message(message.chat.id, "<b>Введите положительное число</b>")
-                    return
-                
-                # Проверяем, поддерживает ли бот платежи
-                try:
-                    bot.send_invoice(
-                        chat_id=message.chat.id,
-                        title="Пополнение звёзд",
-                        description=f"Пополнение на {amount} звёзд",
-                        invoice_payload=f"payment_{user_id}_{amount}_{int(time.time())}",
-                        provider_token="",  # Для Stars можно оставить пустым
-                        currency="XTR",
-                        prices=[types.LabeledPrice(label="Stars", amount=amount)]
-                    )
-                except Exception as e:
-                    # Если платежи не работают, зачисляем звёзды вручную (для тестирования)
-                    print(f"Ошибка при создании инвойса: {e}")
-                    # ВАЖНО: Уберите этот блок в продакшене!
-                    user_data = db.get(User.user_id == user_id)
-                    new_balance = user_data['balance'] + amount
-                    db.update({'balance': new_balance}, User.user_id == user_id)
+                parts = message.text.split()
+                if len(parts) != 3:
                     bot.send_message(
                         message.chat.id, 
-                        f"<b>⚠️ Платежная система временно недоступна.\n\n💰 На баланс зачислено {amount} звёзд (тестовый режим).</b>",
+                        "❌ <b>Использование:</b>\n"
+                        "/addstars [user_id] [количество]\n\n"
+                        "<b>Пример:</b>\n"
+                        "/addstars 123456789 100",
                         parse_mode='HTML'
                     )
-                    
-            except ValueError:
-                bot.send_message(message.chat.id, "<b>Введите число</b>")
-            except Exception as e:
-                print(f"Ошибка в process_payment_amount: {e}")
-                bot.send_message(message.chat.id, "Ошибка при обработке платежа")
-
-        @bot.pre_checkout_query_handler(func=lambda query: True)
-        def process_pre_checkout_query(pre_checkout_query):
-            try:
-                bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
-            except Exception as e:
-                print(f"Ошибка в pre_checkout: {e}")
-                try:
-                 
+                    return
+                
+                user_id = int(parts[1])
+                amount = int(parts[2])
+                
+                if amount <= 0:
+                    bot.send_message(message.chat.id, "❌ Сумма должна быть больше 0!")
+                    return
+                
+                user_data = db.get(User.user_id == user_id)
+                if not user_data:
+                    bot.send_message(message.chat.id, "❌ Пользователь не найден")
+                    return
+                
+                new_balance = user_data['balance'] + amount
+                db.update({'balance': new_balance}, User.user_id == user_id)
+                
+                bot.send_message(
+                    message.chat.id, 
+                    f"✅ <b>Зачислено {amount} звёзд</b>\n"
+          
