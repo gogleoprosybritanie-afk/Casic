@@ -139,7 +139,7 @@ def create_bot():
                 btn_issued = types.InlineKeyboardButton("Выдано", callback_data=f"issued_{user_id}_{count}")
                 markup.add(btn_issued)
                 
-                admin_msg = bot.send_message(
+                bot.send_message(
                     ADMIN_CHANNEL_ID,
                     f"<b>Новая заявка</b>\n\n"
                     f"<blockquote><b>ID: {user_id}</b></blockquote>\n"
@@ -262,7 +262,7 @@ def create_bot():
                 )
                 
                 game_text = "Больше" if game_type == "more" else "Меньше"
-                channel_msg = bot.send_message(
+                bot.send_message(
                     CHANNEL_ID,
                     f"<b>Новая ставка</b>\n\n"
                     f"<blockquote><b>Игрок: @{username}</b></blockquote>\n"
@@ -355,13 +355,11 @@ def create_bot():
                 print(f"Ошибка в profile_handler: {e}")
                 bot.send_message(message.chat.id, "Ошибка при загрузке профиля")
 
-        # ========== НОВАЯ ФУНКЦИЯ: РУЧНОЕ ПОПОЛНЕНИЕ ==========
         @bot.message_handler(func=lambda message: message.text == "💰 Пополнить звёзды")
         def add_stars_handler(message):
             """Кнопка пополнения - отправляет инструкцию для ручного пополнения"""
             try:
                 markup = types.InlineKeyboardMarkup()
-                # Замените на свой юзернейм
                 btn_admin = types.InlineKeyboardButton("👤 Связаться с админом", url="https://t.me/Wromly")
                 markup.add(btn_admin)
                 
@@ -379,8 +377,6 @@ def create_bot():
             except Exception as e:
                 print(f"Ошибка в add_stars_handler: {e}")
 
-        # ========== КОМАНДЫ ДЛЯ АДМИНИСТРАТОРА ==========
-        
         @bot.message_handler(commands=['addstars'])
         def add_stars_admin(message):
             """Только для админа - добавляет звёзды пользователю"""
@@ -419,4 +415,9 @@ def create_bot():
                 bot.send_message(
                     message.chat.id, 
                     f"✅ <b>Зачислено {amount} звёзд</b>\n"
-          
+                    f"👤 Пользователь: <code>{user_id}</code>\n"
+                    f"💰 Новый баланс: <code>{new_balance} звёзд</code>",
+                    parse_mode='HTML'
+                )
+                
+ 
