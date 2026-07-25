@@ -357,7 +357,6 @@ def create_bot():
 
         @bot.message_handler(func=lambda message: message.text == "💰 Пополнить звёзды")
         def add_stars_handler(message):
-            """Кнопка пополнения - отправляет инструкцию для ручного пополнения"""
             try:
                 markup = types.InlineKeyboardMarkup()
                 btn_admin = types.InlineKeyboardButton("👤 Связаться с админом", url="https://t.me/Wromly")
@@ -379,7 +378,6 @@ def create_bot():
 
         @bot.message_handler(commands=['addstars'])
         def add_stars_admin(message):
-            """Только для админа - добавляет звёзды пользователю"""
             if message.from_user.id != ADMIN_ID:
                 bot.send_message(message.chat.id, "⛔ У вас нет прав!")
                 return
@@ -420,4 +418,7 @@ def create_bot():
                     parse_mode='HTML'
                 )
                 
- 
+                try:
+                    bot.send_message(
+                        user_id,
+                        f"💰 <b>Вам зачислено {amount} звёзд
