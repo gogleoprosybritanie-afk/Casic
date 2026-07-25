@@ -7,5 +7,3 @@ ADMIN_CHANNEL_ID = "-1004428662174" # ид канала для заявок (д�
 ADMIN_ID = 8226881959 # ид админа
 
 CHANNEL_LINK = "https://t.me/Wromlybet" # ссылка на канал со ставками
-
-PAYMENT_PROVIDER_TOKEN = ""  # Для Stars оставляем пустым
