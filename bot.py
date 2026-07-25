@@ -63,7 +63,7 @@ def create_bot():
             except Exception as e:
                 print(f"Ошибка в start_handler: {e}")
                 traceback.print_exc()
-                bot.send_message(message.chat.id, "Произошла ошибка, попробуйте ещё раз")
+                bot.send_message(message.chat.id, "Произошла ошибка, попробуйте ещё раз", parse_mode='HTML')
 
         @bot.message_handler(func=lambda message: message.text == "🎁 Вывести звёзды")
         def withdraw_stars_handler(message):
@@ -93,7 +93,7 @@ def create_bot():
                 )
             except Exception as e:
                 print(f"Ошибка в withdraw_stars_handler: {e}")
-                bot.send_message(message.chat.id, "Произошла ошибка при выводе звёзд")
+                bot.send_message(message.chat.id, "Произошла ошибка при выводе звёзд", parse_mode='HTML')
 
         @bot.callback_query_handler(func=lambda call: call.data.startswith("withdraw_"))
         def withdraw_amount_choice(call):
@@ -187,11 +187,11 @@ def create_bot():
                 bot.edit_message_text(
                     chat_id=call.message.chat.id,
                     message_id=call.message.message_id,
-                    f"<b>Новая заявка</b>\n\n"
-                    f"<blockquote><b>ID: {user_id}</b></blockquote>\n"
-                    f"<blockquote><b>Юзернейм: @{username}</b></blockquote>\n"
-                    f"<code>{count} звёзд</code>\n\n"
-                    "<pre><b>Выдано</b></pre>",
+                    text=f"<b>Новая заявка</b>\n\n"
+                         f"<blockquote><b>ID: {user_id}</b></blockquote>\n"
+                         f"<blockquote><b>Юзернейм: @{username}</b></blockquote>\n"
+                         f"<code>{count} звёзд</code>\n\n"
+                         "<pre><b>Выдано</b></pre>",
                     parse_mode='HTML'
                 )
                 
@@ -212,7 +212,7 @@ def create_bot():
                     bot.send_message(message.chat.id, "<b>Сумма звёзд должна быть больше нуля</b>", parse_mode='HTML')
                     return
                 if amount > user_data['balance']:
-                    bot.send_message(message.chat.id, "Недостаточно звёзд на балансе!")
+                    bot.send_message(message.chat.id, "Недостаточно звёзд на балансе!", parse_mode='HTML')
                     return
                     
                 markup = types.InlineKeyboardMarkup()
@@ -227,10 +227,10 @@ def create_bot():
                     reply_markup=markup
                 )
             except ValueError:
-                bot.send_message(message.chat.id, "Пожалуйста, введите число!")
+                bot.send_message(message.chat.id, "Пожалуйста, введите число!", parse_mode='HTML')
             except Exception as e:
                 print(f"Ошибка в process_bet_amount: {e}")
-                bot.send_message(message.chat.id, "Произошла ошибка при обработке ставки")
+                bot.send_message(message.chat.id, "Произошла ошибка при обработке ставки", parse_mode='HTML')
 
         @bot.callback_query_handler(func=lambda call: call.data.startswith("game_"))
         def game_choice(call):
@@ -313,7 +313,8 @@ def create_bot():
                     )
                     bot.send_message(
                         user_id,
-                        f"🎉 Вы выиграли! Выпало: {dice_value}\nВаш выигрыш: {win_amount} звёзд"
+                        f"🎉 Вы выиграли! Выпало: {dice_value}\nВаш выигрыш: {win_amount} звёзд",
+                        parse_mode='HTML'
                     )
                 else:
                     bot.send_message(
@@ -324,12 +325,13 @@ def create_bot():
                     )
                     bot.send_message(
                         user_id,
-                        f"😞 Вы проиграли. Выпало: {dice_value}"
+                        f"😞 Вы проиграли. Выпало: {dice_value}",
+                        parse_mode='HTML'
                     )
             except Exception as e:
                 print(f"Ошибка в confirm_game: {e}")
                 try:
-                    bot.send_message(call.message.chat.id, "Произошла ошибка во время игры")
+                    bot.send_message(call.message.chat.id, "Произошла ошибка во время игры", parse_mode='HTML')
                 except:
                     pass
 
@@ -364,7 +366,7 @@ def create_bot():
                 bot.send_message(message.chat.id, text, parse_mode='HTML')
             except Exception as e:
                 print(f"Ошибка в profile_handler: {e}")
-                bot.send_message(message.chat.id, "Ошибка при загрузке профиля")
+                bot.send_message(message.chat.id, "Ошибка при загрузке профиля", parse_mode='HTML')
 
         @bot.message_handler(func=lambda message: message.text == "💰 Пополнить звёзды")
         def add_stars_handler(message):
@@ -390,7 +392,7 @@ def create_bot():
         @bot.message_handler(commands=['addstars'])
         def add_stars_admin(message):
             if message.from_user.id != ADMIN_ID:
-                bot.send_message(message.chat.id, "⛔ У вас нет прав!")
+                bot.send_message(message.chat.id, "⛔ У вас нет прав!", parse_mode='HTML')
                 return
             
             try:
@@ -410,12 +412,12 @@ def create_bot():
                 amount = int(parts[2])
                 
                 if amount <= 0:
-                    bot.send_message(message.chat.id, "❌ Сумма должна быть больше 0!")
+                    bot.send_message(message.chat.id, "❌ Сумма должна быть больше 0!", parse_mode='HTML')
                     return
                 
                 user_data = db.get(User.user_id == user_id)
                 if not user_data:
-                    bot.send_message(message.chat.id, "❌ Пользователь не найден")
+                    bot.send_message(message.chat.id, "❌ Пользователь не найден", parse_mode='HTML')
                     return
                 
                 new_balance = user_data['balance'] + amount
@@ -424,12 +426,4 @@ def create_bot():
                 bot.send_message(
                     message.chat.id, 
                     f"✅ <b>Зачислено {amount} звёзд</b>\n"
-                    f"👤 Пользователь: <code>{user_id}</code>\n"
-                    f"💰 Новый баланс: <code>{new_balance} звёзд</code>",
-                    parse_mode='HTML'
-                )
-                
-                try:
-                    bot.send_message(
-                        user_id,
-                      
+                    f"👤 
