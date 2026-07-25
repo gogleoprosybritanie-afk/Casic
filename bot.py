@@ -426,4 +426,33 @@ def create_bot():
                 bot.send_message(
                     message.chat.id, 
                     f"✅ <b>Зачислено {amount} звёзд</b>\n"
-                    f"👤 
+                    f"👤 Пользователь: <code>{user_id}</code>\n"
+                    f"💰 Новый баланс: <code>{new_balance} звёзд</code>",
+                    parse_mode='HTML'
+                )
+                
+                try:
+                    bot.send_message(
+                        user_id,
+                        f"✅ Вам зачислено <b>{amount} звёзд</b>!\n"
+                        f"💰 Ваш баланс: <code>{new_balance} звёзд</code>",
+                        parse_mode='HTML'
+                    )
+                except Exception:
+                    pass
+            except Exception as e:
+                print(f"Ошибка в add_stars_admin: {e}")
+                traceback.print_exc()
+                bot.send_message(message.chat.id, "Произошла ошибка при зачислении звёзд", parse_mode='HTML')
+
+        print(f"Бот @{BOT_USERNAME} успешно запущен!")
+        bot.infinity_polling(none_stop=True, interval=0, timeout=20)
+
+    except Exception as e:
+        print(f"Критическая ошибка при запуске бота: {e}")
+        traceback.print_exc()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    create_bot()
